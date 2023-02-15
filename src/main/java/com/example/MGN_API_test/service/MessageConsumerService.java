@@ -6,8 +6,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class MessageConsumerService {
 
-    @JmsListener(destination = "Test")
-    public void listener(String message){
-        System.out.println("The message send from QUEUE - Test : " + message);
+    @JmsListener(destination = "request.queue")
+    public void requestListener(String request){
+        System.out.println("The message send from QUEUE - request.queue : " + request);
+    }
+
+    @JmsListener(destination = "response.queue")
+    public void responseLister(String response){
+        System.out.println("The message send from QUEUE - response.queue : " + response);
+
     }
 }

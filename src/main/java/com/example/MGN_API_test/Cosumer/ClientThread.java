@@ -1,5 +1,8 @@
 package com.example.MGN_API_test.Cosumer;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jms.core.JmsTemplate;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
@@ -19,6 +22,7 @@ public class ClientThread extends Thread{
         br = new BufferedReader(in);
         bw = new BufferedWriter(out);
     }
+
     @Override
     public void run() {
         try{

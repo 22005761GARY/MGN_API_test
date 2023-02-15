@@ -1,10 +1,7 @@
 package com.example.MGN_API_test;
 
-import com.example.MGN_API_test.config.JmsConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ConfigurableApplicationContext;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -28,6 +25,7 @@ public class MgnApiTestApplication {
 			try {
 				Socket socket = server.accept();
 				MultiClientHandler clientHandler = new MultiClientHandler(socket);
+				logger.info("Client Connected!! : " + socket.getInetAddress());
 				pool.execute(clientHandler);
 			} catch (IOException e) {
 				e.getStackTrace();

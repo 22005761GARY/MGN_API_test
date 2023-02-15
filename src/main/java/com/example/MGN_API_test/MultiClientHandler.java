@@ -2,12 +2,14 @@ package com.example.MGN_API_test;
 
 import java.io.*;
 import java.net.Socket;
-import java.sql.SQLException;
 
+import com.example.MGN_API_test.config.SpringUtil;
+import com.example.MGN_API_test.service.GetResponseService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
-import org.json.JSONObject;
+
+import static java.lang.Thread.currentThread;
 
 public class MultiClientHandler implements Runnable{
 
@@ -19,6 +21,8 @@ public class MultiClientHandler implements Runnable{
 
     private static final Logger logger = LogManager.getLogger(MultiClientHandler.class);
 
+    private GetResponseService getResponseService = SpringUtil.getBean(GetResponseService.class);
+
     public MultiClientHandler(Socket socket) throws IOException {
         this.socket = socket;
         this.in = new InputStreamReader(socket.getInputStream());
@@ -26,79 +30,41 @@ public class MultiClientHandler implements Runnable{
         this.br = new BufferedReader(in);
         this.bw = new BufferedWriter(out);
     }
-    @Override
-    public void run() {
-        try{
-            while (true) {
-                try {
-                    String clientRequest = br.readLine();
-//                        System.out.println("Client : " + clientRequest);
-                    logger.info(socket.getPort() + " Client : " + clientRequest);
-                    if (clientRequest.equalsIgnoreCase("END")) {
-                        bw.write("bye");
-                        logger.info(" Client disconnected " + socket);
-                        bw.newLine();
-                        bw.flush();
-                        break;
-                    } else {
-                        JSONObject jsonObject = new JSONObject(clientRequest);
-                        String requestType = jsonObject.getString("requestType");
-                        switch (requestType) {
-                            case "Select":
-//                                bw.write(SqlConnection.getData(jsonObject).toString());
-                                bw.newLine();
-                                bw.flush();
-                                break;
-                            case "Create":
-//                                bw.write(SqlConnection.createData(jsonObject));
-                                bw.newLine();
-                                bw.flush();
-                                break;
-                            case "Update":
-                                JSONObject key = jsonObject.getJSONObject("key");
-//                                bw.write(SqlConnection.updateData(jsonObject, key).toString());
-                                bw.newLine();
-                                bw.flush();
-                                break;
-                            case "Delete":
-//                                bw.write(SqlConnection.deleteData(jsonObject));
-                                bw.newLine();
-                                bw.flush();
-                                break;
-                            default:
-                                bw.write("Incorrect request, Only use for CRUD");
-                                bw.newLine();
-                                bw.flush();
-                                break;
-                        }
-                    }
 
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-//                catch (SQLException e) {
-//                    e.getStackTrace();
-//                    logger.error("SQL syntax Error");
-//                    bw.write("SQL syntax Error");
-//                    bw.newLine();
-//                    bw.flush();
-//                }
-                catch (JSONException e) {
-                    e.getStackTrace();
-                    logger.error("JSON type error(Please enter a JSONObject)");
-                    bw.write("JSON type error(Please enter a JSONObject)");
+    @Override
+    public void run(){
+        while (true){
+            try{
+                String request = br.readLine();
+                if (request.equalsIgnoreCase("end")){
+                    bw.write("bye");
                     bw.newLine();
                     bw.flush();
-                } catch (RuntimeException e) {
-                    e.getStackTrace();
-                    logger.error(e.getMessage());
-                    bw.write(e.getMessage());
+                    socket.close();
+                }
+
+                bw.write(getResponseService.getResponse(request));
+                bw.newLine();
+                bw.flush();
+
+                logger.info(currentThread().getName());
+                socket.close();
+
+            } catch (IOException e) {
+                e.getStackTrace();
+                logger.error("ClientHandler Error!!");
+            }catch (JSONException e){
+                try {
+                    logger.error("Please Enter a JSONObject type");
+                    bw.write("Please Enter a JSONObject type");
                     bw.newLine();
                     bw.flush();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
                 }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            e.getStackTrace();
-            logger.error("IO Exception in Client Handler");
-        }    }
+        }
+    }
 }

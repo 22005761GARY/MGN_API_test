@@ -60,7 +60,7 @@ public class TransController {
 
     @PostMapping("/send")
     public String sendMessage(@RequestBody String message){
-        this.sendService.sendMessage(message);
+        this.sendService.sendRequest(message);
         return message;
     }
     @GetMapping("/send/AllMgni")
