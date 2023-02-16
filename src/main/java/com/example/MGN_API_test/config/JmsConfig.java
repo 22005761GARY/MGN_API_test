@@ -13,9 +13,13 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
 import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.jms.support.converter.MessageType;
+import org.springframework.jms.support.destination.DynamicDestinationResolver;
 import org.springframework.util.backoff.FixedBackOff;
 
 import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Session;
 
 @Configuration
 @EnableJms
@@ -62,7 +66,29 @@ public class JmsConfig {
         configure.configure(factory, connectionFactory);
 //        factory.setBackOff(new FixedBackOff(5000,5));//activeMQ配置監聽器容器重連服務器策略
         factory.setPubSubDomain(false);
-
         return factory;
+    }
+
+    @Bean
+    public JmsListenerContainerFactory<?> topicConnectionFactory(ConnectionFactory connectionFactory,
+                                                                 DefaultJmsListenerContainerFactoryConfigurer configure) {
+        DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+        configure.configure(factory, connectionFactory);
+//        factory.setBackOff(new FixedBackOff(5000,5));//activeMQ配置監聽器容器重連服務器策略
+        factory.setPubSubDomain(true);
+        return factory;
+    }
+
+    @Bean
+    public DynamicDestinationResolver destinationResolver() {
+        return new DynamicDestinationResolver() {
+            @Override
+            public Destination resolveDestinationName(Session session, String destinationName, boolean pubSubDomain) throws JMSException, JMSException {
+                if (destinationName.endsWith(".topic")) {
+                    pubSubDomain = true;
+                }
+                return super.resolveDestinationName(session, destinationName, pubSubDomain);
+            }
+        };
     }
 }

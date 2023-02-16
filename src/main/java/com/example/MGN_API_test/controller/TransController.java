@@ -7,7 +7,7 @@ import com.example.MGN_API_test.controller.dto.response.GetMgniResponse;
 import com.example.MGN_API_test.controller.dto.response.StatusResponse;
 import com.example.MGN_API_test.model.entity.Mgni;
 import com.example.MGN_API_test.service.MgniService;
-import com.example.MGN_API_test.service.SendService;
+import com.example.MGN_API_test.service.SendResponseService;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,7 +24,7 @@ public class TransController {
     @Autowired
     private MgniService mgniService;
     @Autowired
-    private SendService sendService;
+    private SendResponseService sendService;
 
                               //指定回傳類型
     @GetMapping(value = "/get", produces = {"application/xml", "application/json"})
@@ -56,16 +56,5 @@ public class TransController {
     @DeleteMapping("/DeleteBySpec")
     public StatusResponse deleteDataBySpec(@RequestBody MgniRequest request) throws Exception{
         return this.mgniService.deleteDataBySpec(request);
-    }
-
-    @PostMapping("/send")
-    public String sendMessage(@RequestBody String message){
-        this.sendService.sendRequest(message);
-        return message;
-    }
-    @GetMapping("/send/AllMgni")
-    public String sendAllMgni() throws Exception {
-        this.sendService.getAllData();
-        return "Message send.";
     }
 }

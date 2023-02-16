@@ -12,25 +12,29 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
-public class GetResponseService {
+public class GetRequestService {
 
     @Autowired
     private MgniService mgniService;
     private static ObjectMapper objectMapper = new ObjectMapper();
-    private static final Logger logger = LogManager.getLogger(GetResponseService.class);
+    private static final Logger logger = LogManager.getLogger(GetRequestService.class);
 
     private JmsTemplate jmsTemplate;
 
     @Autowired
-    public GetResponseService(JmsTemplate jmsTemplate){
+    public GetRequestService(JmsTemplate jmsTemplate){
         this.jmsTemplate = jmsTemplate;
     }
-    public String getResponse(String request) throws Exception {
+
+    @JmsListener(destination = "request.queue", containerFactory = "queueConnectionFactory")
+    public void getRequest(String request) throws Exception {
+        logger.info("Request From request.queue : "+request);
         JSONObject jsonObject = new JSONObject(request);
-        jmsTemplate.convertAndSend("request.queue", request);
+
         String requestType = jsonObject.getString("requestType");
         JSONObject requestBodyJson = jsonObject.getJSONObject("requestBody");
         String requestBody = JSONObject.valueToString(requestBodyJson);
@@ -48,7 +52,7 @@ public class GetResponseService {
                 logger.info(response);
                 break;
             case "Delete":
-                response = mgniService.deleteDataBySpec(objectMapper.readValue(requestBody, MgniRequest.class)).toString();
+                response = mgniService.deleteDataBySpec(objectMapper.readValue(requestBody, MgniRequest.class)).getStatus();
                 jmsTemplate.convertAndSend("response.queue", response);
                 logger.info(response);
                 break;
@@ -63,13 +67,11 @@ public class GetResponseService {
                 logger.error("Bad Request");
                 break;
         }
-
-        return response;
     }
 
-//    private static String toString(Object object) throws Exception {
-//        objectMapper.findAndRegisterModules();
-//        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
-//    }
-
+    @Scheduled(cron = "0/20 * * * * *")
+    public void SendMessage(){
+        jmsTemplate.convertAndSend("message.topic" , "Welcome");
+        logger.info("message send..");
+    }
 }

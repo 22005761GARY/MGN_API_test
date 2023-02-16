@@ -9,14 +9,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class MgnApiTestApplication {
 
 	private static final Logger logger = LogManager.getLogger(MgnApiTestApplication.class);
 
 	public static void main(String[] args) throws IOException {
 		SpringApplication.run(MgnApiTestApplication.class, args);
+
 //		ConfigurableApplicationContext context = SpringApplication.run(JmsConfig.class, args);
 		ServerSocket server = new ServerSocket(1111);
 		ExecutorService pool = Executors.newCachedThreadPool();
@@ -25,7 +28,7 @@ public class MgnApiTestApplication {
 			try {
 				Socket socket = server.accept();
 				MultiClientHandler clientHandler = new MultiClientHandler(socket);
-				logger.info("Client Connected!! : " + socket.getInetAddress());
+				logger.info("Client Connected!! : " + socket);
 				pool.execute(clientHandler);
 			} catch (IOException e) {
 				e.getStackTrace();

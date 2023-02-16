@@ -1,8 +1,5 @@
 package com.example.MGN_API_test.Cosumer;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jms.core.JmsTemplate;
-
 import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
@@ -14,7 +11,6 @@ public class ClientThread extends Thread{
     private BufferedWriter bw;
     private InputStreamReader in;
     private OutputStreamWriter out;
-
     public ClientThread(Socket socket) throws IOException {
         this.socket = socket;
         in = new InputStreamReader(socket.getInputStream());
