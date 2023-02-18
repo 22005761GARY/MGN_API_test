@@ -3,6 +3,7 @@ package com.example.MGN_API_test.service;
 import com.example.MGN_API_test.controller.dto.request.MgniRequest;
 import com.example.MGN_API_test.controller.dto.request.NewMgniRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -15,6 +16,9 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.jms.Queue;
+import javax.jms.Topic;
+
 @Service
 public class GetRequestService {
 
@@ -24,6 +28,11 @@ public class GetRequestService {
     private static final Logger logger = LogManager.getLogger(GetRequestService.class);
 
     private JmsTemplate jmsTemplate;
+    @Autowired
+    private Queue responseQueue;
+
+    @Autowired
+    private Topic topic;
 
     @Autowired
     public GetRequestService(JmsTemplate jmsTemplate){
@@ -32,46 +41,52 @@ public class GetRequestService {
 
     @JmsListener(destination = "request.queue", containerFactory = "queueConnectionFactory")
     public void getRequest(String request) throws Exception {
-        logger.info("Request From request.queue : "+request);
-        JSONObject jsonObject = new JSONObject(request);
+        try{
 
-        String requestType = jsonObject.getString("requestType");
-        JSONObject requestBodyJson = jsonObject.getJSONObject("requestBody");
-        String requestBody = JSONObject.valueToString(requestBodyJson);
+            logger.info("Request From request.queue : "+request);
+            JSONObject jsonObject = new JSONObject(request);
+
+            String requestType = jsonObject.getString("requestType");
+            JSONObject requestBodyJson = jsonObject.getJSONObject("requestBody");
+            String requestBody = JSONObject.valueToString(requestBodyJson);
 //        logger.info(requestBody);
-        String response = "";
-        switch (requestType){
-            case "Select":
-                response = mgniService.getDataBySpec(objectMapper.readValue(requestBody, MgniRequest.class)).toString();
-                jmsTemplate.convertAndSend("response.queue", response);
-                logger.info(response);
-                break;
-            case "Create":
-                response = mgniService.createData(objectMapper.readValue(requestBody, NewMgniRequest.class)).toString();
-                jmsTemplate.convertAndSend("response.queue", response);
-                logger.info(response);
-                break;
-            case "Delete":
-                response = mgniService.deleteDataBySpec(objectMapper.readValue(requestBody, MgniRequest.class)).getStatus();
-                jmsTemplate.convertAndSend("response.queue", response);
-                logger.info(response);
-                break;
-            case "Update":
-                String key = jsonObject.getString("key");
-                response = mgniService.updateData(key, objectMapper.readValue(requestBody, NewMgniRequest.class)).toString();
-                jmsTemplate.convertAndSend("response.queue", response);
-                logger.info(response);
-                break;
-            default:
-                response = "Please Enter a CRUD request!!";
-                logger.error("Bad Request");
-                break;
+            String response = "";
+            switch (requestType){
+                case "Select":
+                    response = mgniService.getDataBySpec(objectMapper.readValue(requestBody, MgniRequest.class)).toString();
+                    jmsTemplate.convertAndSend(responseQueue, response);
+                    logger.info(response);
+                    break;
+                case "Create":
+                    response = mgniService.createData(objectMapper.readValue(requestBody, NewMgniRequest.class)).toString();
+                    jmsTemplate.convertAndSend(responseQueue, response);
+                    logger.info(response);
+                    break;
+                case "Delete":
+                    response = mgniService.deleteDataBySpec(objectMapper.readValue(requestBody, MgniRequest.class)).getStatus();
+                    jmsTemplate.convertAndSend(responseQueue, response);
+                    logger.info(response);
+                    break;
+                case "Update":
+                    String key = jsonObject.getString("key");
+                    response = mgniService.updateData(key, objectMapper.readValue(requestBody, NewMgniRequest.class)).toString();
+                    jmsTemplate.convertAndSend(responseQueue, response);
+                    logger.info(response);
+                    break;
+                default:
+                    response = "Please Enter a CRUD request!!";
+                    logger.error("Bad Request");
+                    break;
+            }
+        } catch (JSONException e) {
+            jmsTemplate.convertAndSend(responseQueue, "Please Enter a JSON type!!");
+            logger.error("JSON Exception");
         }
     }
 
     @Scheduled(cron = "0/20 * * * * *")
     public void SendMessage(){
-        jmsTemplate.convertAndSend("message.topic" , "Welcome");
+        jmsTemplate.convertAndSend(topic , "Welcome");
         logger.info("message send..");
     }
 }

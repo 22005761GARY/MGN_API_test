@@ -20,6 +20,7 @@ import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Session;
+import java.util.concurrent.Executors;
 
 @Configuration
 @EnableJms
@@ -66,6 +67,9 @@ public class JmsConfig {
         configure.configure(factory, connectionFactory);
 //        factory.setBackOff(new FixedBackOff(5000,5));//activeMQ配置監聽器容器重連服務器策略
         factory.setPubSubDomain(false);
+        factory.setTaskExecutor(Executors.newFixedThreadPool(10));
+        factory.setConcurrency("5-10");
+
         return factory;
     }
 
@@ -76,19 +80,7 @@ public class JmsConfig {
         configure.configure(factory, connectionFactory);
 //        factory.setBackOff(new FixedBackOff(5000,5));//activeMQ配置監聽器容器重連服務器策略
         factory.setPubSubDomain(true);
-        return factory;
-    }
 
-    @Bean
-    public DynamicDestinationResolver destinationResolver() {
-        return new DynamicDestinationResolver() {
-            @Override
-            public Destination resolveDestinationName(Session session, String destinationName, boolean pubSubDomain) throws JMSException, JMSException {
-                if (destinationName.endsWith(".topic")) {
-                    pubSubDomain = true;
-                }
-                return super.resolveDestinationName(session, destinationName, pubSubDomain);
-            }
-        };
+        return factory;
     }
 }

@@ -8,6 +8,7 @@ import com.example.MGN_API_test.service.GetRequestService;
 import com.example.MGN_API_test.service.SendResponseService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONException;
 
 import static java.lang.Thread.currentThread;
 
@@ -55,20 +56,7 @@ public class MultiClientHandler implements Runnable {
             logger.info(currentThread().getName());
 //            socket.close();
         }
-//                catch (IOException e) {
-//                    e.getStackTrace();
-//                    logger.error("ClientHandler Error!!");
-//                }catch (JSONException e){
-//                    try {
-//                        logger.error("Please Enter a JSONObject type");
-//                        bw.write("Please Enter a JSONObject type");
-//                        bw.newLine();
-//                        bw.flush();
-//
-//                    } catch (IOException ex) {
-//                        throw new RuntimeException(ex);
-//                    }
-//                }
+
         catch (Exception e) {
             throw new RuntimeException(e);
         }

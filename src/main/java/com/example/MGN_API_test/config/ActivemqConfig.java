@@ -18,14 +18,15 @@ public class ActivemqConfig {
     @Value("${messageTopic}")
     private String messageTopic;
 
-    @Bean
+
+    @Bean //將Bean對象交給Spring做管理
     public Queue responseQueue() {
         return new ActiveMQQueue(responseQueue);
     }
-    @Bean
-    public Queue requestQueue() {
-        return new ActiveMQQueue(requestQueue);
-    }
+//    @Bean
+//    public Queue requestQueue() {
+//        return new ActiveMQQueue(requestQueue);
+//    }
     @Bean
     public Topic messageTopic() {
         return new ActiveMQTopic(messageTopic);
